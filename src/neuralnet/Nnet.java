@@ -42,6 +42,7 @@ public class Nnet {
 		return this.inputvalues;
 	}
 	
+	// Change Y from an m x 1 matrix to an m x b matrix where b is the number of distinct values of Y from 0 to b-1 
 	public double[][] Changeychanged(){
 		double[][] yc = new double[this.trueY.length][this.numoutput];
 		for(int i =0; i< this.trueY.length; i++) {
@@ -50,7 +51,8 @@ public class Nnet {
 		}
 		return yc;
 	}
-
+	
+	// propogateforward, from input layer to outputlayer
 	public double[][] propogateforward(){
 		
 		if (this.layerlist.size() == 0){
@@ -65,7 +67,7 @@ public class Nnet {
 				middle.Propagateforward();
 				this.layerlist.add(middle);
 			}
-			OutputLayer fin = new OutputLayer(middle,this.numoutput, this.ychanged,this.lambda,this.lr);
+			LastHiddenLayer fin = new LastHiddenLayer(middle,this.numoutput, this.ychanged,this.lambda,this.lr);
 			fin.Propagateforward();
 			this.layerlist.add(fin);
 			this.Costfunction(fin.Getoutput());
@@ -197,7 +199,7 @@ public class Nnet {
 		Y[5] = 1;
 		Y[6] = 1;
 
-		Nnet nn = new Nnet(4, X, Y,3,1,50, 0.05);
+		Nnet nn = new Nnet(4, X, Y,3,1,50, 0.1);
 		double[][] k =  nn.Start();
 		
 		

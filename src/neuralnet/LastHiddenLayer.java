@@ -1,8 +1,8 @@
 package neuralnet;
 
-public class OutputLayer extends Layer {
+public class LastHiddenLayer extends Layer {
 		
-	public OutputLayer(Layer prevLayer, int numoutput, double[][] TrueY, double Lambda,  double LR) {
+	public LastHiddenLayer(Layer prevLayer, int numoutput, double[][] TrueY, double Lambda,  double LR) {
 		super(prevLayer, numoutput, TrueY, Lambda, LR);
 		Initweight();
 	}

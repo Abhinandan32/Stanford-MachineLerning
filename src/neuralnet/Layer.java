@@ -37,7 +37,7 @@ public class Layer {
 		this.lr = LR;
 	}
 	
-	// output layer
+	// Last hidden layer, the output of this layer is the output 
 	public Layer( Layer prevLayer, int numoutput, double[][] Truey, double Lambda,double LR) {
 		this.numoutput = numoutput;
 		this.prevlayer = prevLayer;
@@ -46,19 +46,25 @@ public class Layer {
 		this.lr = LR;
 	}
 	
+	// get Y in m x b form
 	public double[][] GetTrueY(){
 		return this.trueY;
 	}
 	
+	// set delta
 	public void Setdiff(double[][] dif) {
 		this.diff = dif;
 	}
+	
+	// get delta
 	public double[][] Getdiff(){
 		return this.diff;
 	}
 	
+	// initiation of weight/theta
 	public void Initweight() {
 	}
+	
 	
 	public void Propagateforward() {
 	}
@@ -66,37 +72,48 @@ public class Layer {
 	public void Propagateback() {
 	}
 	
+	//get the input of the layer
 	public double[][] Getinput(){
 		return this.inputvalue;
 	}
 	
+	//sigmoid/logistic function
 	public void sigmoid() {
 		for (int i = 0 ; i < this.outputvalue.length; i ++ ) {
 			for( int j = 0; j < outputvalue[i].length; j ++) {
 				this.outputvalue[i][j] = 1/(1 + Math.exp(- this.outputvalue[i][j]));
 			}
 		}
-	}
+	} 
+	
+	//get the output of the previous layer
 	public double[][] Getprevoutput() {
 		return this.prevlayer.outputvalue;
 	}
 	
+	//get the weight of current layer
 	public double[][] getweight(){
 		return this.thisweight;
 	}
 	
+	//get the index of current layer
 	public int getlayerindex() {
 		return this.layerindex;
 	}
 	
-	
+	// get the number of output we would have in current layer.
+	//in hidden layer, it is the number of neurons, in the last hidden layer it is the number of 
+	//distinct value of Y.
 	public int Getnoutput() {
 		return this.numoutput;
 	}
+	
+	// get the number of neuron in current layer
 	public int GetNneuron() {
 		return this.numneuron;
 	}
 	
+	//initiation of weight, called by Initweight
 	public void Setweightinit(int m, int n) {
 		Random r = new Random();
 		this.thisweight = new double[m][n];
@@ -107,20 +124,24 @@ public class Layer {
 		}
 	}
 	
+	
+	//Update the weight with new value
 	public void Updateweight(double[][] weight) {
 		this.thisweight = weight;
 	}
 	
+	// set the output value 
 	public void Setoutputv(double[][] s) {
 		this.outputvalue = s;
 	}
 	
+	// get the output value
 	public double[][] Getoutput(){
 		return this.outputvalue;
 	}
 	
 
-	
+	// apply forward propogation by Theta * inputvalue and apply sigmoid function 
 	public void calculateProp(double[][] inputvalue, double[][] thisweight, int noutput) {
 		int numoutput = this.Getnoutput();
 		double[][] outputvalue = new double[inputvalue.length][numoutput];
@@ -144,6 +165,7 @@ public class Layer {
 		
 	}
 	
+	//Used for back propogation
 	public double[][] SigmoidGradient() {
 		int m = this.Getprevoutput().length;
 		int n = this.Getprevoutput()[0].length;
@@ -161,6 +183,7 @@ public class Layer {
 		return SG;
 	}
 	
+	// calculated the delta of previous hidden layer, used in back propogation.
 	public void calchiddendiff(){
 		this.diff = this.multiply(this.diff, this.thisweight);
 		//System.out.println("calcgrad done!!");
@@ -176,6 +199,7 @@ public class Layer {
 		
 	}
 	
+	// remove the first column which is the column for bias.
 	public void castfirst() {
 		double[][] tempdiff = new double[this.diff.length][this.diff[0].length-1];
 		for(int i =0 ; i < tempdiff.length; i++) {
@@ -186,6 +210,7 @@ public class Layer {
 		this.Setdiff(tempdiff);
 	}
 	
+	// apply multiplication between two matrices
 	public double[][] multiply(double[][] df, double[][] wei){
 		int m = df.length;
 		int n = wei[0].length;
@@ -202,6 +227,7 @@ public class Layer {
 		return dff;
 	}
 	
+	// calculate the gradient descent of current layer and update weight, regulation is included.
 	public void calcgrad(double[][] diff, double[][] input) {
 		int m = this.getweight().length;
 		int n = this.getweight()[0].length;
@@ -233,6 +259,7 @@ public class Layer {
 		this.Updateweight(this.backweight(this.weightgrad));
 	}
 	
+	// apply gradient descent and learning rate to update weight
 	public double[][] backweight(double[][] weightgrad) {
 		double[][] tempweight = this.thisweight;
 		for(int i = 0; i < weightgrad.length; i++) {
@@ -242,13 +269,14 @@ public class Layer {
 		}
 		return tempweight;
 	}
-
+	
+	// calculate the regulation for gradient descent 
 	public double[][] calcgradreg(double[][] input){
 		double[][] reg = new double[this.thisweight.length][this.thisweight[0].length];
  		for(int i = 0; i< this.thisweight.length; i++) {
  			reg[i][0] = 0;
 			for(int j = 1; j < this.thisweight[0].length; j++) {
-				reg[i][j] = this.lambda / input.length * reg[i][j] * reg[i][j];
+				reg[i][j] = this.lambda / input.length * reg[i][j];
 			}
 		}
  		return reg;
