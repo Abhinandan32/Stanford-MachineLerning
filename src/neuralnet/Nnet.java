@@ -19,8 +19,10 @@ public class Nnet {
 	private double[][] ychanged;
 	private double lambda;
 	private int maxit;
+	private ArrayList<Double> costlist;
+	private double lr;
 
-	public Nnet( int Numhiddenlayer, double[][] InputValues, double[] TrueY, int NumN,double Lambda, int Maxit) {
+	public Nnet( int Numhiddenlayer, double[][] InputValues, double[] TrueY, int NumN,double Lambda, int Maxit, double LR) {
 		this.numhiddenlayer = Numhiddenlayer;
 		this.inputvalues = InputValues;
 		this.trueY = TrueY;
@@ -32,6 +34,8 @@ public class Nnet {
 		this.ychanged = Changeychanged();
 		this.lambda = Lambda;
 		this.maxit = Maxit;
+		this.costlist  = new ArrayList<Double>();
+		this.lr = LR;
 	}
 	
 	public double[][] getinpv(){
@@ -50,22 +54,23 @@ public class Nnet {
 	public double[][] propogateforward(){
 		
 		if (this.layerlist.size() == 0){
-			Layer initi = new InputLayer(this.inputvalues, this.numneuron, this.lambda);
+			Layer initi = new InputLayer(this.inputvalues, this.numneuron, this.lambda, this.lr);
 			initi.Propagateforward();
 			this.layerlist.add(initi);
-			HiddenLayer middle = new HiddenLayer(this.numneuron,initi,1,this.numneuron,this.lambda);
+			HiddenLayer middle = new HiddenLayer(this.numneuron,initi,1,this.numneuron,this.lambda,this.lr);
 			middle.Propagateforward();
 			this.layerlist.add(middle);
 			for(int i = 2; i - 1 < this.numhiddenlayer; i++) {
-				middle = new HiddenLayer(this.numneuron,middle,i,this.numneuron,this.lambda);
+				middle = new HiddenLayer(this.numneuron,middle,i,this.numneuron,this.lambda,this.lr);
 				middle.Propagateforward();
 				this.layerlist.add(middle);
 			}
-			OutputLayer fin = new OutputLayer(middle,this.numoutput, this.ychanged,this.lambda);
+			OutputLayer fin = new OutputLayer(middle,this.numoutput, this.ychanged,this.lambda,this.lr);
 			fin.Propagateforward();
 			this.layerlist.add(fin);
 			this.Costfunction(fin.Getoutput());
 			System.out.println(this.cost+" this is cost");
+			this.costlist.add(this.cost);
 			return fin.Getoutput();
 			
 		}
@@ -79,6 +84,7 @@ public class Nnet {
 		fin.Propagateforward();	
 		this.Costfunction(fin.Getoutput());
 		System.out.println(this.cost+" this is cost");
+		this.costlist.add(this.cost);
 		return fin.Getoutput();
 	}
 	
@@ -164,22 +170,34 @@ public class Nnet {
 	}
 	
 	public static void main(String[] args) {
-		double[][] X = new double[3][2];
+		double[][] X = new double[7][2];
 		X[0][0] = 1.0;
 		X[0][1] = 1.0;
 		X[1][0] = 1.0;
 		X[1][1] = 0.0;
 		X[2][0] = 0.0;
-		X[2][1] = 1.0; 
+		X[2][1] = 1.0;
+		X[3][0] = 0.0;
+		X[3][1] = 0.0; 
+		X[4][0] = 0.0;
+		X[4][1] = 0.0; 
+		X[5][0] = 0.0;
+		X[5][1] = 0.0; 
+		X[6][0] = 0.0;
+		X[6][1] = 0.0; 
 		
-		double[] Y = new double[3];
+		double[] Y = new double[7];
 		Y[0] = 1;
 
 		Y[1] = 0;
 
 		Y[2] = 0;
+		Y[3] = 1;
+		Y[4] = 1;
+		Y[5] = 1;
+		Y[6] = 1;
 
-		Nnet nn = new Nnet(3, X, Y,3,1,5);
+		Nnet nn = new Nnet(4, X, Y,3,1,50, 0.05);
 		double[][] k =  nn.Start();
 		
 		

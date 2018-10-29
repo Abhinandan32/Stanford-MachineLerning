@@ -2,8 +2,8 @@ package neuralnet;
 
 public class OutputLayer extends Layer {
 		
-	public OutputLayer(Layer prevLayer, int numoutput, double[][] TrueY, double Lambda) {
-		super(prevLayer, numoutput, TrueY, Lambda);
+	public OutputLayer(Layer prevLayer, int numoutput, double[][] TrueY, double Lambda,  double LR) {
+		super(prevLayer, numoutput, TrueY, Lambda, LR);
 		Initweight();
 	}
 	

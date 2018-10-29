@@ -4,8 +4,8 @@ import java.util.Random;
 
 public class InputLayer extends Layer{
 	
-	public InputLayer(double[][] Inputvalue, int Numoutput, double Lambda){
-		super(Inputvalue, Numoutput, Lambda);	
+	public InputLayer(double[][] Inputvalue, int Numoutput, double Lambda, double LR){
+		super(Inputvalue, Numoutput, Lambda, LR);	
 		Initweight();
 	}
 	

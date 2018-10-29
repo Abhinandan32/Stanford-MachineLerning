@@ -4,8 +4,8 @@ import java.util.Random;
 
 public class HiddenLayer extends Layer{
 	
-	public HiddenLayer( int NumoutputWeight, Layer prevLayer, int Index, int Numneuron, double Lambda) {
-		super(NumoutputWeight, prevLayer,Index, Numneuron, Lambda);
+	public HiddenLayer( int NumoutputWeight, Layer prevLayer, int Index, int Numneuron, double Lambda,  double LR) {
+		super(NumoutputWeight, prevLayer,Index, Numneuron, Lambda, LR);
 		Initweight();
 	}
 	public void Initweight() {

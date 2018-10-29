@@ -15,31 +15,35 @@ public class Layer {
 	private double[][] trueY;
 	private double lambda;
 	private double[][] weightgrad;
+	private double lr; 
 	
 	// input layer
-	public Layer(double[][] Inputvalue, int Numoutput, double Lambda) {
+	public Layer(double[][] Inputvalue, int Numoutput, double Lambda,double LR) {
 		this.inputvalue = Inputvalue;
 		this.numoutput = Numoutput;
 		this.layerindex = 0;
 		this.outputvalue = new double[Inputvalue.length][this.numoutput];
 		this.lambda = Lambda;
+		this.lr = LR;
 	}
 	
 	// hidden layer
-	public Layer( int Numoutput, Layer prevLayer, int Index, int Numneuron, double Lambda) {
+	public Layer( int Numoutput, Layer prevLayer, int Index, int Numneuron, double Lambda,double LR) {
 		this.numoutput = Numoutput;
 		this.prevlayer = prevLayer;
 		this.numneuron = Numneuron;
 		this.layerindex = Index;
 		this.lambda = Lambda;
+		this.lr = LR;
 	}
 	
 	// output layer
-	public Layer( Layer prevLayer, int numoutput, double[][] Truey, double Lambda) {
+	public Layer( Layer prevLayer, int numoutput, double[][] Truey, double Lambda,double LR) {
 		this.numoutput = numoutput;
 		this.prevlayer = prevLayer;
 		this.trueY = Truey;
 		this.lambda = Lambda;
+		this.lr = LR;
 	}
 	
 	public double[][] GetTrueY(){
@@ -226,9 +230,19 @@ public class Layer {
 				this.weightgrad[i][j] += reg[i][j];
 			}
 		}
-		this.Updateweight(this.weightgrad);
+		this.Updateweight(this.backweight(this.weightgrad));
 	}
 	
+	public double[][] backweight(double[][] weightgrad) {
+		double[][] tempweight = this.thisweight;
+		for(int i = 0; i < weightgrad.length; i++) {
+			for(int j = 0; j < weightgrad[0].length; j++) {
+				tempweight[i][j] = tempweight[i][j] - this.lr * weightgrad[i][j];
+			}
+		}
+		return tempweight;
+	}
+
 	public double[][] calcgradreg(double[][] input){
 		double[][] reg = new double[this.thisweight.length][this.thisweight[0].length];
  		for(int i = 0; i< this.thisweight.length; i++) {
