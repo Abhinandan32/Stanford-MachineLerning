@@ -101,6 +101,9 @@ public class Layer {
 		return this.layerindex;
 	}
 	
+	public void setlayeriindex(int Index) {
+		this.layerindex = Index;
+	}
 	// get the number of output we would have in current layer.
 	//in hidden layer, it is the number of neurons, in the last hidden layer it is the number of 
 	//distinct value of Y.

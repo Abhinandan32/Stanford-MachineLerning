@@ -21,6 +21,8 @@ public class Nnet {
 	private int maxit;
 	private ArrayList<Double> costlist;
 	private double lr;
+	private ArrayList<double[][]> finalweight;
+	private double[][] finaloutput;
 
 	public Nnet( int Numhiddenlayer, double[][] InputValues, double[] TrueY, int NumN,double Lambda, int Maxit, double LR) {
 		this.numhiddenlayer = Numhiddenlayer;
@@ -36,6 +38,7 @@ public class Nnet {
 		this.maxit = Maxit;
 		this.costlist  = new ArrayList<Double>();
 		this.lr = LR;
+		this.finalweight = new ArrayList<double[][]>();
 	}
 	
 	public double[][] getinpv(){
@@ -58,20 +61,31 @@ public class Nnet {
 		if (this.layerlist.size() == 0){
 			Layer initi = new InputLayer(this.inputvalues, this.numneuron, this.lambda, this.lr);
 			initi.Propagateforward();
+			this.finalweight.add(initi.getweight());
+			//System.out.println(initi.getlayerindex());
+
 			this.layerlist.add(initi);
 			HiddenLayer middle = new HiddenLayer(this.numneuron,initi,1,this.numneuron,this.lambda,this.lr);
 			middle.Propagateforward();
+			//System.out.println(middle.getlayerindex());
+			this.finalweight.add(middle.getweight());
 			this.layerlist.add(middle);
-			for(int i = 2; i - 1 < this.numhiddenlayer; i++) {
+			for(int i = 2; i < this.numhiddenlayer; i++) {
 				middle = new HiddenLayer(this.numneuron,middle,i,this.numneuron,this.lambda,this.lr);
 				middle.Propagateforward();
+				this.finalweight.add(middle.getweight());
 				this.layerlist.add(middle);
+				//System.out.println(middle.getlayerindex());
 			}
 			LastHiddenLayer fin = new LastHiddenLayer(middle,this.numoutput, this.ychanged,this.lambda,this.lr);
 			fin.Propagateforward();
+			int Index = this.numhiddenlayer;
+			fin.setlayeriindex(Index);
+			//System.out.println(fin.getlayerindex());
+			this.finalweight.add(fin.getweight());
 			this.layerlist.add(fin);
 			this.Costfunction(fin.Getoutput());
-			System.out.println(this.cost+" this is cost");
+			//System.out.println(this.cost+" this is cost");
 			this.costlist.add(this.cost);
 			return fin.Getoutput();
 			
@@ -85,16 +99,54 @@ public class Nnet {
 		Layer fin  = this.layerlist.get(this.layerlist.size()-1);
 		fin.Propagateforward();	
 		this.Costfunction(fin.Getoutput());
-		System.out.println(this.cost+" this is cost");
+		//System.out.println(this.cost+" this is cost");
 		this.costlist.add(this.cost);
 		return fin.Getoutput();
 	}
 	
+	public void Setinput(double[][] input) {
+		this.inputvalues = input;
+	}
+	
+	public void Setoutput(double[] output) {
+		this.trueY  = output;
+		this.ychanged = this.Changeychanged();
+	}
+	
+	public double testset(double[][] input, double[] outcome) {
+		this.Setinput(input);
+		this.Setoutput(outcome);
+		Layer initi = new InputLayer(this.inputvalues, this.numneuron, this.lambda, this.lr);
+		initi.Updateweight(this.finalweight.get(0));
+		initi.Propagateforward();
+		//System.out.println(initi.getlayerindex());
+		HiddenLayer middle = new HiddenLayer(this.numneuron,initi,1,this.numneuron,this.lambda,this.lr);
+		middle.Updateweight(this.finalweight.get(1));
+		middle.Propagateforward();
+		//System.out.println(middle.getlayerindex());
+		for(int i = 2; i < this.numhiddenlayer; i++) {
+			middle = new HiddenLayer(this.numneuron,middle,i,this.numneuron,this.lambda,this.lr);
+			middle.Updateweight(this.finalweight.get(i));
+			middle.Propagateforward();
+			//System.out.println(middle.getlayerindex());
+		}
+		LastHiddenLayer fin = new LastHiddenLayer(middle,this.numoutput, this.ychanged,this.lambda,this.lr);
+		fin.Updateweight(this.finalweight.get(this.numhiddenlayer));
+		fin.Propagateforward();
+		this.cost = 0;
+		this.Costfunction(fin.Getoutput());
+		//System.out.println(this.cost+" this is cost");
+		return this.cost;
+	}
+	
+	
+	
 	public void Propagateback() {
-		//System.out.println("final start");
+		//System.out.println("final start");		
 		int i = this.layerlist.size() -1;
 		Layer fin = this.layerlist.get(i);
 		fin.Propagateback();
+		this.finalweight.set(i, fin.getweight());
 		double[][] diff = fin.Getdiff();
 		i -= 1;
 		//System.out.println("final done");
@@ -102,6 +154,7 @@ public class Nnet {
 			Layer hidden = this.layerlist.get(i);
 			hidden.Setdiff(diff);
 			hidden.Propagateback();
+			this.finalweight.set(i, hidden.getweight());
 			diff = hidden.Getdiff();
 			i -= 1;
 		}
@@ -109,6 +162,7 @@ public class Nnet {
 		Layer input = this.layerlist.get(0);
 		input.Setdiff(diff);
 		input.Propagateback();
+		this.finalweight.set(0, input.getweight());
 		//System.out.println("one epoch done");
 	}
 	
@@ -119,6 +173,10 @@ public class Nnet {
 		 }
 		 return linkedHashSet.size();
 
+	}
+	
+	public ArrayList<double[][]> Getfinalweight(){
+		return this.finalweight;
 	}
 	
 	public double Getregulation() {
@@ -144,6 +202,9 @@ public class Nnet {
 		return result;
 	}
 	
+	public double Getcost() {
+		return this.cost;
+	}
 	
 	public void Costfunction(double[][] output) {
 		for(int i=0; i< output.length; i++ ) {
@@ -159,18 +220,20 @@ public class Nnet {
 		return this.cost;
 	}
 	
-	public double[][] Start() {
+	public void Start() {
 		int i  = 0;
-		while(i < this.maxit-1) {
+		while(i < this.maxit) {
 			//System.out.println(i+ " this is i hhhh");
-			this.propogateforward();
+			this.finaloutput = this.propogateforward();
 			this.Propagateback();
 			i += 1;
 		}
 		this.propogateforward();
-		return this.propogateforward();
 	}
 	
+	public double[][] GetfinalOutput(){
+		return this.finaloutput;
+	}
 	public static void main(String[] args) {
 		double[][] X = new double[7][2];
 		X[0][0] = 1.0;
@@ -199,8 +262,9 @@ public class Nnet {
 		Y[5] = 1;
 		Y[6] = 1;
 
-		Nnet nn = new Nnet(4, X, Y,3,1,50, 0.1);
-		double[][] k =  nn.Start();
+		Nnet nn = new Nnet(4, X, Y,3,1,500, 0.05);
+		nn.Start();
+		double[][] k = nn.GetfinalOutput();
 		
 		
 		for (double[] d : k) {

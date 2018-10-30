@@ -1,19 +1,21 @@
 package neuralnet;
 
 public class LastHiddenLayer extends Layer {
-		
+	
+	
+	
+	// This is the last hidden, the next layer is the output, but the output layer is not generated here, the output of this last hidden layer is the output of the model
 	public LastHiddenLayer(Layer prevLayer, int numoutput, double[][] TrueY, double Lambda,  double LR) {
 		super(prevLayer, numoutput, TrueY, Lambda, LR);
 		Initweight();
 	}
-	
+
 	public void Initweight() {
 		super.Initweight();
 		int m = this.Getnoutput();
 		int n = this.Getprevoutput()[0].length;
 		this.Setweightinit(m, n+1);
 	}
-	
 
 	public void Propagateforward() {
 		super.Propagateforward();

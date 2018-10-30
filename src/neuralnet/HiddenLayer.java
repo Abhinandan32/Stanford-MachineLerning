@@ -2,6 +2,8 @@ package neuralnet;
 
 import java.util.Random;
 
+
+
 public class HiddenLayer extends Layer{
 	
 	public HiddenLayer( int NumoutputWeight, Layer prevLayer, int Index, int Numneuron, double Lambda,  double LR) {
