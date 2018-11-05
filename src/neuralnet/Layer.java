@@ -116,6 +116,10 @@ public class Layer {
 		return this.numneuron;
 	}
 	
+	public void SetWeight(double[][] w) {
+		this.thisweight = w;
+	}
+	
 	//initiation of weight, called by Initweight
 	public void Setweightinit(int m, int n) {
 		Random r = new Random();
@@ -165,6 +169,7 @@ public class Layer {
 		}
 		this.Setoutputv(outputvalue);
 		this.sigmoid();
+
 		
 	}
 	
