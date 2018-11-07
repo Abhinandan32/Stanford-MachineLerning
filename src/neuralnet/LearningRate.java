@@ -25,13 +25,12 @@ public class LearningRate {
 	
 	public void Collecterrorlam() {
 		for(int k = 0; k < this.lambda.length; k++) {
-			System.out.println("this is " + k);
-			Nnet nn = new Nnet(4, this.x, this.y,3,this.lambda[k],500, 0.05);
-			nn.Start();
+			//System.out.println("this is " + k);
+			Nnet nn = new Nnet(4, this.x, this.y,3,this.lambda[k],2000, 0.5);
+			nn.Train();
 			this.trainerror.add(nn.Getcost());
-			double cost = nn.predict(this.xcv, this.ycv);
-			this.cverror.add(cost);
-			
+			nn.predict(this.xcv, this.ycv);
+			this.cverror.add(nn.Getpredcost());
 		}
 	}
 	

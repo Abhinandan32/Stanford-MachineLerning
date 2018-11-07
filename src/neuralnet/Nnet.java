@@ -23,6 +23,9 @@ public class Nnet {
 	private double lr;
 	private ArrayList<double[][]> finalweight;
 	private double[][] finaloutput;
+	private ArrayList<Double> predcosts;
+	private double predcost;
+	
 
 	
 
@@ -40,6 +43,7 @@ public class Nnet {
 		this.maxit = Maxit;
 		this.lr = LR;
 		this.finalweight = new ArrayList<double[][]>();
+		this.predcosts = new ArrayList<Double>(); 
 
 		
 	}
@@ -55,9 +59,20 @@ public class Nnet {
 			int numb = (int) trueY[i];
 			yc[i][numb] = (double) 1;
 		}
+		//System.out.println(" ChangedYc");
+		//this.printdata(yc);
 		return yc;
 	}
 	
+	
+	public void printdata(double[][] yc ) {
+		for(double[] y: yc) {
+			for(double yy : y) {
+				System.out.print(yy+ " ");
+			}
+			System.out.println(" " );
+		}
+	}
 	
 	// propogateforward, from input layer to outputlayer
 	public double[][] propogateforward(){
@@ -114,7 +129,7 @@ public class Nnet {
 		this.ychanged = this.Changeychanged(this.trueY);
 	}
 	
-	public double predict(double[][] input, double[] y) {
+	public double[][] predict(double[][] input, double[] y) {
 		this.Setinput(input);
 		double[][] changedy = this.Changeychanged(y);
 		Layer l = this.layerlist.get(0);
@@ -130,9 +145,13 @@ public class Nnet {
 				outp[i][j-1] =  out[i][j];
 			}
 		}
+		
 		int inpl = input.length;
 		double finalcost = this.Costfunction(outp, changedy, inpl);
-		return finalcost;
+		//System.out.println(finalcost+ "final cost");
+		this.predcost = finalcost;
+		this.predcosts.add(finalcost);
+		return outp;
 		//ArrayList<Double> output = new ArrayList();
 		//for (int i = 1; i < out.length; i++) {
 		//	output.add(out[i]);
@@ -145,20 +164,33 @@ public class Nnet {
 	}
 	
 	
+	public ArrayList<Double> Getpredcosts() {
+		return this.predcosts;
+	}
 	
-	public void Propagateback() {
+	public Double Getpredcost() {
+		return this.predcost;
+	}
+	public void Propagateback(int ind) {
 		//System.out.println("final start");		
 		int i = this.layerlist.size() -1;
 		Layer fin = this.layerlist.get(i);
+		if (ind == 0) {
+			fin.Initweightgrad();
+		}
 		fin.Propagateback();
 
 		this.finalweight.set(i, fin.getweight());
 		double[][] diff = fin.Getdiff();
+
 		i -= 1;
 		//System.out.println("final done");
 		while(i > 0) {
 			Layer hidden = this.layerlist.get(i);
 			hidden.Setdiff(diff);
+			if (ind == 0) {
+				hidden.Initweightgrad();
+			}
 			hidden.Propagateback();
 			this.finalweight.set(i, hidden.getweight());
 			diff = hidden.Getdiff();
@@ -167,6 +199,9 @@ public class Nnet {
 		//System.out.println("middle done");
 		Layer input = this.layerlist.get(0);
 		input.Setdiff(diff);
+		if (ind == 0) {
+			input.Initweightgrad();
+		}
 		input.Propagateback();
 		this.finalweight.set(0, input.getweight());
 		//System.out.println("one epoch done");
@@ -225,15 +260,36 @@ public class Nnet {
 	}
 
 	
-	public void Start() {
+	public void Train() {
 		int i  = 0;
 		while(i < this.maxit) {
+			//System.out.println("!!!!!!!!start train");
 			//System.out.println(i+ " this is i hhhh");
 			this.finaloutput = this.propogateforward();
-			this.Propagateback();
+			if(i == 0) {
+				this.Propagateback(0);
+			}else {
+				this.Propagateback(1);
+			}
+			
 			i += 1;
 		}
+		int j = 0;
+		/*** while(j < this.finalweight.size()) {
+			double[][] weight = this.finalweight.get(j);
+			for(double[] row: weight) {
+				for(double c : row) {
+					System.out.print(c);
+				}
+				System.out.println(" ");
+			}
+			System.out.println("_________________");
+			j += 1;
+		}***/
+		
 		this.propogateforward();
+		this.printdata(this.finaloutput);
+		System.out.println("This is the output for train data");
 	}
 	
 	public double[][] GetfinalOutput(){
@@ -312,9 +368,13 @@ public class Nnet {
 		Y[18] = 1;
 		Y[19] = 1;
 		Y[20] = 1;
+		
+		
+		//Numhiddenlayer: 4, InputValues: X, TrueY: Y
+		//Num Neuron: 3 , regulation rate: 1,  Maxit: 2000, LR: 0.05
 
-		Nnet nn = new Nnet(4, X, Y,3,1,100, 0.05);
-		nn.Start();
+		Nnet nn = new Nnet(4, X, Y,3,7,2000, 1);
+		nn.Train();
 		double[][] k = nn.GetfinalOutput();
 		
 		
@@ -335,7 +395,7 @@ public class Nnet {
 		XX[2][1] = 0.0;
 		XX[3][0] = 0.0;
 		XX[3][1] = 2.5;
-		XX[4][0] = 100.0;
+		XX[4][0] = 6.0;
 		XX[4][1] = 0.0;
 		XX[5][0] = 7.0;
 		XX[5][1] = 2.0;
@@ -351,17 +411,18 @@ public class Nnet {
 		yy[5] = 1;
 		yy[6] = 1;
 				
-		System.out.println(nn.predict(XX,yy));
+		double[][] finalprediction = nn.predict(XX,yy);
 		
-		//for (double[][] dd : nn.finalweight) {
-			//for (double[] d: dd) {
-			//	for(double dddd: d) {
-			//		System.out.print(dddd+" ");
-			//	}
-			//	System.out.println(" ");
-			//}
-			//System.out.println("__________");
-		//}
+		nn.printdata(finalprediction);
+		/***for (double[][] dd : nn.finalweight) {
+			for (double[] d: dd) {
+				for(double dddd: d) {
+					System.out.print(dddd+" ");
+				}
+				System.out.println(" ");
+			}
+			System.out.println("__________");
+		}***/
 		
 
  	}

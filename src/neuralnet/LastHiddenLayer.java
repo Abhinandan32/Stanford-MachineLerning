@@ -33,6 +33,9 @@ public class LastHiddenLayer extends Layer {
 		double[][] truey = this.GetTrueY();
 		this.calculatediff(pred, truey);
 		double[][] diff = this.Getdiff();
+		//System.out.println("get diff! final");
+		//this.printdata(diff);
+		//System.out.println("————————————");
 		double[][] input = this.Getprevoutput();
 		//System.out.println(diff.length +" " + diff[0].length + "diff");
 		this.calcgrad(diff, input);
@@ -41,6 +44,8 @@ public class LastHiddenLayer extends Layer {
 		//System.out.println("calcgrad done");
 		
 	}
+	
+
 	
 	private void calculatediff(double[][] pred, double[][] truey ) {
 		double[][] diff = new double[pred.length][pred[0].length];

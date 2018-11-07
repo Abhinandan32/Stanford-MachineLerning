@@ -1,5 +1,6 @@
 package neuralnet;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Layer {
@@ -17,6 +18,7 @@ public class Layer {
 	private double[][] weightgrad;
 	private double lr; 
 	
+	
 	// input layer
 	public Layer(double[][] Inputvalue, int Numoutput, double Lambda,double LR) {
 		this.inputvalue = Inputvalue;
@@ -25,6 +27,7 @@ public class Layer {
 		this.outputvalue = new double[Inputvalue.length][this.numoutput];
 		this.lambda = Lambda;
 		this.lr = LR;
+
 	}
 	
 	// hidden layer
@@ -126,7 +129,7 @@ public class Layer {
 		this.thisweight = new double[m][n];
 		for (int i = 0; i < m; i++) {
 			for (int j = 0; j < n; j++) {
-				this.thisweight[i][j] = r.nextDouble();
+				this.thisweight[i][j] = 2 * r.nextDouble()-1;
 			}
 		}
 	}
@@ -162,8 +165,7 @@ public class Layer {
 					else {
 						result += inputvalue[i][k-1]* thisweight[j][k];
 					}
-					//System.out.println(inputvalue[i][k]* thisweight[j][k]+"result");
-					}
+				}
 				outputvalue[i][j] = result;
 			}
 		}
@@ -191,6 +193,14 @@ public class Layer {
 		return SG;
 	}
 	
+	public void printdata(double[][] yc ) {
+		for(double[] y: yc) {
+			for(double yy : y) {
+				System.out.print(yy+ " ");
+			}
+			System.out.println(" " );
+		}
+	}
 	// calculated the delta of previous hidden layer, used in back propogation.
 	public void calchiddendiff(){
 		this.diff = this.multiply(this.diff, this.thisweight);
@@ -234,12 +244,14 @@ public class Layer {
 		}
 		return dff;
 	}
+	public void Initweightgrad() {
+		this.weightgrad = new double[this.getweight().length][this.getweight()[0].length];
+	}
 	
 	// calculate the gradient descent of current layer and update weight, regulation is included.
 	public void calcgrad(double[][] diff, double[][] input) {
 		int m = this.getweight().length;
 		int n = this.getweight()[0].length;
-		this.weightgrad = new double[m][n];
 		for( int i = 0; i < m; i++) {
 			//System.out.println("this is i"+ i);
 			for (int j = 0; j < n; j++) {
@@ -255,13 +267,15 @@ public class Layer {
 						result += diff[k][i] * input[k][j-1];
 					}
 				}
-				this.weightgrad[i][j] = result/input.length;
+				this.weightgrad[i][j] += result;
+				this.weightgrad[i][j] /= input.length;
 			}
 		}
+		
 		double[][] reg = this.calcgradreg(input);
 		for (int i = 0; i< reg.length ; i++) {
-			for(int j = 0; j <reg[0].length; j++) {
-				this.weightgrad[i][j] += reg[i][j];
+			for(int j = 1; j <reg[0].length; j++) {
+				this.weightgrad[i][j] += reg[i][j-1];
 			}
 		}
 		this.Updateweight(this.backweight(this.weightgrad));
@@ -275,6 +289,9 @@ public class Layer {
 				tempweight[i][j] = tempweight[i][j] - this.lr * weightgrad[i][j];
 			}
 		}
+		//System.out.println("Start changing weight!!");
+		//this.printdata(this.thisweight);
+		//System.out.println("Done!!!");
 		return tempweight;
 	}
 	
