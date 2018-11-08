@@ -1,8 +1,26 @@
 package neuralnet;
 
+import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+
+import org.jfree.chart.*;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.block.BlockBorder;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 
 public class LearningRate {
+	private double[][] xt;
+	private double[] yt;
 	private double[][] x;
 	private double[] y;
 	private double[][] xcv;
@@ -10,23 +28,72 @@ public class LearningRate {
 	private double[] lambda;
 	private ArrayList<Double> trainerror;
 	private ArrayList<Double> cverror;
+	private int split;
+	private ArrayList<Integer> index;
+
+	private XYSeriesCollection dataset;
+
 	
 	
 	
-	public LearningRate(double[][] X, double[] Y, double[][] Xcv, double[] Ycv, double[] Lambda) {
-		this.x = X;
-		this.y = Y;
-		this.xcv = Xcv;
-		this.ycv = Ycv;
+	public LearningRate(double[][] X, double[] Y, double[] Lambda, int Split ) {
+		this.xt = X;
+		this.yt = Y;
 		this.lambda = Lambda;
 		this.trainerror = new ArrayList<Double>();
 		this.cverror = new ArrayList<Double>();
+		this.dataset = new XYSeriesCollection();
+		this.split = Split;
+	}
+	
+	public void Startshuffle() {
+		this.index = new ArrayList<Integer>();
+		for(int i = 0; i< this.xt.length; i++) {
+			this.index.add(i);
+		}
+		Collections.shuffle(this.index);
+		
+	}
+	
+	public void StartSplit(int totn) {	
+		int N = totn/5;		
+		this.x = new double[3*N][this.xt[0].length];
+		this.y = new double[3*N];
+
+		int i = 0;
+		while(i < 3*N) {
+			this.x[i] = this.xt[index.get(i)];
+			this.y[i] = this.yt[index.get(i)];
+			i++;
+		}
+		
+		this.xcv = new double[N][this.xt[0].length];
+		this.ycv = new double[N];
+		
+		while(i< 4*N) {
+			this.xcv[i-3*N] = this.xt[index.get(i)];
+			this.ycv[i-3*N] = this.yt[index.get(i)];
+			i++;
+		}
+		
+		/***
+		 * double[][] Xt = new double[N][X[0].length];
+		 * 		double[] Yt = new double[N];
+		
+			while(i < 5*N) {
+			Xt[i-4*N] = X[index.get(i)];
+			Yt[i-4*N] = Y[index.get(i)];
+			i++;
+		}
+		 */
 	}
 	
 	public void Collecterrorlam() {
-		for(int k = 0; k < this.lambda.length; k++) {
+		for(int k = this.split; k < this.xt.length; k += this.split) {
+			this.Startshuffle();
+			this.StartSplit(k);
 			//System.out.println("this is " + k);
-			Nnet nn = new Nnet(4, this.x, this.y,3,this.lambda[k],2000, 0.5);
+			Nnet nn = new Nnet(10, this.x, this.y,3,0.01,100, 0.5);
 			nn.Train();
 			this.trainerror.add(nn.Getcost());
 			nn.predict(this.xcv, this.ycv);
@@ -34,8 +101,32 @@ public class LearningRate {
 		}
 	}
 	
+	public void addseries(ArrayList<Double> b, String c) {
+		XYSeries series = new XYSeries(c);
+		int N = this.xt.length / this.split;
+		for(int i = 0; i < N; i++) {
+			series.add(this.split*(i+1), b.get(i));
+		}
+		dataset.addSeries(series);
+	}
+	
 	public void Visulization() {
-		
+		this.addseries(this.cverror, "cv");
+		this.addseries(this.trainerror, "train");
+		JFreeChart chart = ChartFactory.createXYLineChart("Learning Curve", "size", "J cost", this.dataset);
+		XYPlot plot = chart.getXYPlot();
+		XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+		renderer.setSeriesPaint(0, Color.RED);
+		renderer.setSeriesPaint(1, Color.black);
+		plot.setRenderer(renderer);
+		chart.getLegend().setFrame(BlockBorder.NONE);
+		chart.setTitle(new TextTitle("Learning rate for changing Lambda = 0.01"));
+		try {
+			ChartUtilities.saveChartAsPNG(new File("LR.png"), chart, 450, 400);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public ArrayList<Double> getTrainerror(){
@@ -48,80 +139,62 @@ public class LearningRate {
 	
 	public static void main(String[] args) {
 		
-		double[][] X = new double[21][2];
-		X[0][0] = 1.0;
-		X[0][1] = 1.0;
-		X[1][0] = 1.0;
-		X[1][1] = 2.0;
-		X[2][0] = 2.0;
-		X[2][1] = 1.0;
-		X[3][0] = 0.5;
-		X[3][1] = 1.0; 
-		X[4][0] = 2.0;
-		X[4][1] = 0.5; 
-		X[5][0] = 0.3;
-		X[5][1] = 0.6; 
-		X[6][0] = 0.2;
-		X[6][1] = 0.7; 
-		X[7][0] = 1.2;
-		X[7][1] = 0.3; 
+		String csvFile = "/Users/sjyuan/eclipse-workspace/MachineLearning/src/neuralnet/train.csv";
+		BufferedReader br = null;
+		String line = "";
+		String cvsSplitBy = ",";
 		
-		X[8][0] = 2.2;
-		X[8][1] = 1.3; 
-		X[9][0] = 1.5;
-		X[9][1] = 3.0; 
-		X[10][0] = 3.0;
-		X[10][1] = 1.0; 
-		X[11][0] = 2.4;
-		X[11][1] = 2.0; 
-		X[12][0] = 2.0;
-		X[12][1] = 2.0; 
-		X[13][0] = 3.5;
-		X[13][1] = 10; 
-		X[14][0] = 4.0;
-		X[14][1] = 0.3; 
-		X[15][0] = 2.0;
-		X[15][1] = 3.0; 
-		X[16][0] = 5.0;
-		X[16][1] = 0.0;
-		X[17][0] = 4.0;
-		X[17][1] = 0.03;
-		X[18][0] = 3.0;
-		X[18][1] = 2.0;
-		X[19][0] = 1.2;
-		X[19][1] = 3.0;
-		X[20][0] = 3.0;
-		X[20][1] = 3.0;
+		ArrayList<double[]> all = new ArrayList<double[]>();
 		
+		try {
+			br = new BufferedReader(new FileReader(csvFile));
+			br.readLine();
+			while ((line = br.readLine()) != null) {
+				String[] row = line.split(cvsSplitBy);
+				double[] newa = Arrays.stream(row).mapToDouble(Double::parseDouble).toArray();
+				all.add(newa);
+			}
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		double[] n = all.get(0);
+		double[][] X = new double[all.size()-1][n.length-1];
+		double[] Y = new double[all.size()-1];
+		//System.out.println(all.size()+ "size");
+		for(int i = 1; i < all.size()-1; i++) {
+			double[] arr = all.get(i);
+			if(arr.length == all.get(0).length) {
+				for(int j = 0; j < arr.length; j++) {
+					
+					
+					if(j == 0) {
+						
+						Y[i] = arr[0];
+					}else {
+						//System.out.print("???");
+						//System.out.print(arr[j]+ ",");
+						X[i][j-1] = arr[j]; 
+					}	
+				}
+				
+			}
+
+			//System.out.println(" ");
+			//System.out.println(i+"+++++++++++");
+		}
+		//_____________________________________________________
 		
-		double[] Y = new double[21];
-		Y[0] = 0;
-
-		Y[1] = 0;
-
-		Y[2] = 0;
-		Y[3] = 0;
-		Y[4] = 0;
-		Y[5] = 0;
-		Y[6] = 0;
-		Y[7] = 0;
-		Y[8] = 1;
-
-		Y[9] = 1;
-		Y[10] = 1;
-		Y[11] = 1;
-
-		Y[12] = 1;
-		Y[13] = 1;
-		Y[14] = 1;
-		Y[15] = 1;
-		Y[16] = 1;
-		Y[17] = 1;
-		Y[18] = 1;
-		Y[19] = 1;
-		Y[20] = 1;
 
 		
+		
+		
+		
+		
+		
+		
+		
+
+	/***	
 		double[][] Xcv = new double[7][2];
 		X[0][0] = 1.0;
 		X[0][1] = 1.0;
@@ -149,7 +222,7 @@ public class LearningRate {
 		Y[4] = 1;
 		Y[5] = 1;
 		Y[6] = 1;
-		
+		***/
 		
 		double[] lambda = new double[6];
 		lambda[0] = 0.05;
@@ -160,12 +233,14 @@ public class LearningRate {
 		lambda[5] = 3;
 		
 		System.out.println("start");
-		LearningRate LR = new LearningRate(X, Y, Xcv, Ycv, lambda);
+		LearningRate LR = new LearningRate(X, Y, lambda, 50);
 		LR.Collecterrorlam();
 		for( double dd: LR.cverror) {
-			System.out.println(dd + " cost changed ");		}
-		
-		
+			System.out.println(dd + " cv cost changed ");		}
+		for(double dd: LR.trainerror) {
+			System.out.println(dd+ " train cost changed");
+		}
+		LR.Visulization();
 	}
 }
 
