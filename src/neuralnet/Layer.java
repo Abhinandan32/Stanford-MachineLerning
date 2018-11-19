@@ -267,8 +267,7 @@ public class Layer {
 						result += diff[k][i] * input[k][j-1];
 					}
 				}
-				this.weightgrad[i][j] += result;
-				this.weightgrad[i][j] /= input.length;
+				this.weightgrad[i][j] = result/input.length;
 			}
 		}
 		

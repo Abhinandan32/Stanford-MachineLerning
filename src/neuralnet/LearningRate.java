@@ -67,10 +67,11 @@ public class LearningRate {
 			i++;
 		}
 		
-		this.xcv = new double[N][this.xt[0].length];
-		this.ycv = new double[N];
-		
-		while(i< 4*N) {
+		N = this.xt.length/5;
+		this.xcv = new double[2*N][this.xt[0].length];
+		this.ycv = new double[2*N];
+		i = 3*N;
+		while(i< 5*N) {
 			this.xcv[i-3*N] = this.xt[index.get(i)];
 			this.ycv[i-3*N] = this.yt[index.get(i)];
 			i++;
@@ -90,14 +91,19 @@ public class LearningRate {
 	
 	public void Collecterrorlam() {
 		for(int k = this.split; k < this.xt.length; k += this.split) {
+		
 			this.Startshuffle();
 			this.StartSplit(k);
 			//System.out.println("this is " + k);
-			Nnet nn = new Nnet(10, this.x, this.y,3,0.01,100, 0.5);
+			Nnet nn = new Nnet(2, this.x, this.y,3,0,100, 0.5);
 			nn.Train();
-			this.trainerror.add(nn.Getcost());
-			nn.predict(this.xcv, this.ycv);
-			this.cverror.add(nn.Getpredcost());
+			double[][] trainoutput = nn.GetfinalOutput();
+			double[] trainoutput1d = nn.outputto1d(trainoutput);
+			this.trainerror.add(nn.CalcError(trainoutput1d, this.y, this.y.length));
+			
+			double[][] testoutput = nn.predict(this.xcv, this.ycv);
+			double[] testoutput1d = nn.outputto1d(testoutput);
+			this.cverror.add(nn.CalcError(testoutput1d, this.ycv, this.ycv.length));
 		}
 	}
 	
@@ -120,7 +126,7 @@ public class LearningRate {
 		renderer.setSeriesPaint(1, Color.black);
 		plot.setRenderer(renderer);
 		chart.getLegend().setFrame(BlockBorder.NONE);
-		chart.setTitle(new TextTitle("Learning rate for changing Lambda = 0.01"));
+		chart.setTitle(new TextTitle("Learning rate for Lambda = 2"));
 		try {
 			ChartUtilities.saveChartAsPNG(new File("LR.png"), chart, 450, 400);
 		} catch (IOException e) {
@@ -139,7 +145,7 @@ public class LearningRate {
 	
 	public static void main(String[] args) {
 		
-		String csvFile = "/Users/sjyuan/eclipse-workspace/MachineLearning/src/neuralnet/train.csv";
+		String csvFile = "/Users/sjyuan/eclipse-workspace/MachineLearning/src/neuralnet/train2.csv";
 		BufferedReader br = null;
 		String line = "";
 		String cvsSplitBy = ",";
@@ -233,7 +239,7 @@ public class LearningRate {
 		lambda[5] = 3;
 		
 		System.out.println("start");
-		LearningRate LR = new LearningRate(X, Y, lambda, 50);
+		LearningRate LR = new LearningRate(X, Y, lambda,100);
 		LR.Collecterrorlam();
 		for( double dd: LR.cverror) {
 			System.out.println(dd + " cv cost changed ");		}

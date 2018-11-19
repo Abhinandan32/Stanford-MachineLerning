@@ -26,8 +26,7 @@ public class Nnet {
 	private double lr;
 	private ArrayList<double[][]> finalweight;
 	private double[][] finaloutput;
-	private ArrayList<Double> predcosts;
-	private double predcost;
+
 	
 
 	
@@ -46,7 +45,7 @@ public class Nnet {
 		this.maxit = Maxit;
 		this.lr = LR;
 		this.finalweight = new ArrayList<double[][]>();
-		this.predcosts = new ArrayList<Double>(); 
+
 
 		
 	}
@@ -142,18 +141,16 @@ public class Nnet {
 			l.Propagateforward();
 		}
 		double[][] out = l.Getoutput();
-		double[][] outp = new double[changedy.length][out[0].length-1];
+		double[][] outp = new double[out.length][out[0].length-1];
 		for(int i = 0 ; i < changedy.length; i++) {
-			for( int j = 1; j < out[0].length; j ++) {
+			if (i == out.length){
+				break;
+			}
+			for( int j = 1; j < out[i].length; j ++) {
 				outp[i][j-1] =  out[i][j];
 			}
 		}
 		
-		int inpl = input.length;
-		double finalcost = this.Costfunction(outp, changedy, inpl);
-		//System.out.println(finalcost+ "final cost");
-		this.predcost = finalcost;
-		this.predcosts.add(finalcost);
 		return outp;
 		//ArrayList<Double> output = new ArrayList();
 		//for (int i = 1; i < out.length; i++) {
@@ -166,14 +163,6 @@ public class Nnet {
 		//System.out.println(this.trueY[index]);
 	}
 	
-	
-	public ArrayList<Double> Getpredcosts() {
-		return this.predcosts;
-	}
-	
-	public Double Getpredcost() {
-		return this.predcost;
-	}
 	public void Propagateback(int ind) {
 		//System.out.println("final start");		
 		int i = this.layerlist.size() -1;
@@ -261,6 +250,32 @@ public class Nnet {
 		return costs;
 		
 	}
+	
+	public double[] outputto1d(double[][] output) {
+		double[] finaloutput = new double[output.length];
+		for(int i =0; i < output.length; i++) {
+			int max = 0;
+			for( int j = 0; j< output[0].length ;j++) {
+				if (output[i][j] > output[i][max]) {
+					max = j;
+				}
+			}
+			finaloutput[i] = max;
+		}
+		return finaloutput;
+	}
+	
+	public double CalcError(double[] output, double[] y, int inpl) {
+		double costs = 0;
+		System.out.println(y.length+ "this is ylength");
+		for(int i = 0; i < y.length && i < output.length; i++) {
+
+			costs+= Math.pow((output[i] - y[i]), 2);
+		}
+		costs = costs/(2*inpl);
+		return costs;
+		
+	}
 
 	
 	public void Train() {
@@ -277,22 +292,10 @@ public class Nnet {
 			
 			i += 1;
 		}
-		int j = 0;
-		/*** while(j < this.finalweight.size()) {
-			double[][] weight = this.finalweight.get(j);
-			for(double[] row: weight) {
-				for(double c : row) {
-					System.out.print(c);
-				}
-				System.out.println(" ");
-			}
-			System.out.println("_________________");
-			j += 1;
-		}***/
 		
 		this.propogateforward();
-		this.printdata(this.finaloutput);
-		System.out.println("This is the output for train data");
+		//this.printdata(this.finaloutput);
+		//System.out.println("This is the output for train data");
 	}
 	public int GetNHiddenlayer() {
 		return this.numhiddenlayer;
